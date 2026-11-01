@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local tool config
+.codex/
+.claude/settings.local.json
+
+# Slicer / CAD scratch
+*.gcode
+*.bgcode
+~$*
+*.bak
+
+# OS / editor
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/

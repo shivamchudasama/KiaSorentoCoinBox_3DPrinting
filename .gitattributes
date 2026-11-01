@@ -1,0 +1,10 @@
+# Large binaries go to Git LFS. PNG previews stay as ordinary blobs.
+*.stl filter=lfs diff=lfs merge=lfs -text
+*.3mf filter=lfs diff=lfs merge=lfs -text
+*.pdf filter=lfs diff=lfs merge=lfs -text
+*.glb filter=lfs diff=lfs merge=lfs -text
+*.step filter=lfs diff=lfs merge=lfs -text
+*.STEP filter=lfs diff=lfs merge=lfs -text
+
+*.py text eol=lf
+*.md text eol=lf
