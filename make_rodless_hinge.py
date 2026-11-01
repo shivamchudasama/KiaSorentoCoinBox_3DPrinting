@@ -1,4 +1,4 @@
-"""Rod-free hinge variants for coin.STEP (Kia Sorento coin + mechanical key tray).
+"""Rod-free hinge variants for Original/coin.STEP (Kia Sorento coin + mechanical key tray).
 
 The original hinge needs two Ø2.41 mm metal rods pushed through the tray knuckles
 into the lid barrel. This script fills those bores and builds three rod-free joints:
@@ -11,14 +11,14 @@ into the lid barrel. This script fills those bores and builds three rod-free joi
 Run with the PowerShell `python` (needs cadquery, trimesh, matplotlib; do not use -I):
     python make_rodless_hinge.py                 # all variants
     python make_rodless_hinge.py keyed snap      # selected variants
-Writes rodless/<variant>/ (STEP of both bodies, STL per part, animated GLB of the assembly
+Writes CoinBox/<variant>/ (STEP of both bodies, STL per part, animated GLB of the assembly
 showing how it goes together and opens/closes, preview PNG).
 The lid's flat top gets a debossed leather grain in the meshes (STL and GLB; the STEP stays
 smooth), in two styles: `grain` and `stitched` (grain plus a stitch line around the panel).
 Keyed and snap write coin_<v>_tray.stl and coin_<v>_lid_<style>.stl, print_in_place writes
 coin_print_in_place_<style>.stl; each variant gets coin_<v>_<style>.glb, and
 coin_<v>_leather.png previews the texture.
-coin.STEP is never modified. Every check prints PASS/FAIL; exit code 1 if any fail.
+Original/coin.STEP is never modified. Every check prints PASS/FAIL; exit code 1 if any fail.
 """
 import math
 import sys
@@ -43,8 +43,8 @@ from OCP.TopTools import TopTools_IndexedMapOfShape
 from OCP.TopoDS import TopoDS
 
 HERE = Path(__file__).resolve().parent
-SRC = HERE / "coin.STEP"
-OUT = HERE / "rodless"
+SRC = HERE / "Original" / "coin.STEP"
+OUT = HERE / "CoinBox"
 
 # ---- tunables (mm) ------------------------------------------------------------
 OLD_BORE_R = 1.206      # Ø2.41 rod bore in the original
@@ -71,6 +71,10 @@ CONE_GAP = 0.35         # normal clearance between cone pin and cone socket
 PIP_POSE = 90.0         # print-in-place export pose (lid opening angle)
 
 MAX_OPEN = 96           # lid first touches the tray at 97°
+
+# The lid's underside pocket (67 x 39 x 3.7 mm) is only needed as swing clearance in a strip
+# reaching 0.8 mm behind the hinge axis; the rest is filled, 45° rear face so it prints unsupported
+POCKET_FILL_Z = 0.0     # fill starts this far forward of the hinge axis, at the underside
 STL_TOL, STL_ANG = 0.01, 0.1
 STL_WELD = 1e-4         # OCC meshes each face separately; weld so the STL is one closed shell
 STL_EDGE = 1.5          # target triangle edge on planar faces (OCC leaves them as long sliver fans)
@@ -247,6 +251,37 @@ def fill_old_bores(tray, lid):
         check(not bore_faces(solid), f"{name}: no Ø2.41 bore faces left")
         out.append(solid)
     return out
+
+
+# ---- common: shrink the lid's underside pocket ---------------------------------------
+def shrink_pocket(tray, lid):
+    """Fill the pocket in the lid's underside from POCKET_FILL_Z ahead of the hinge axis to its
+    front, leaving open the strip at the hinge edge that the tray's back wall swings through."""
+    print("shrink lid underside pocket")
+    down = sorted((f for f in lid.Faces() if f.geomType() == "PLANE" and f.normalAt().y < -0.999),
+                  key=lambda f: -f.Area())
+    y_under = down[0].Center().y
+    roof = next(f for f in down if f.Center().y > y_under + 1)
+    y_roof = roof.Center().y
+    # the pocket: the roof plus the fillets running from it down to the underside
+    pocket = [f for f in lid.Faces() if (b := f.BoundingBox()).ymin > y_under - 1e-3
+              and b.ymax < y_roof + 1e-3 and abs(b.xmin) < 40 and abs(b.xmax) < 40 and b.zmin > H.az - 5]
+    pb = cq.Compound.makeCompound(pocket).BoundingBox()
+    x1, z0, z1, y1 = pb.xmax + 0.5, H.az + POCKET_FILL_Z, pb.zmax + 0.5, y_roof + 0.5
+    tool = yz_prism([(y_under, z0), (y1, z0 + y1 - y_under), (y1, z1), (y_under, z1)], -x1, x1)
+    fill = tool.cut(lid)
+    fb = fill.BoundingBox()
+    check(fb.xmax < x1 - 0.1 and fb.xmin > -x1 + 0.1 and fb.zmax < z1 - 0.1,
+          f"pocket fill stays inside the pocket (|x| <= {max(fb.xmax, -fb.xmin):.2f}, z <= {fb.zmax:.2f}; "
+          f"pocket |x| <= {pb.xmax:.2f}, z <= {pb.zmax:.2f})")
+    lid = boolean("fuse", lid, fill, "lid + pocket fill")
+    # nowhere in the swing may the fill come closer to the tray than the closed lid's underside
+    top = tray.intersect(box(-x1 - 5, x1 + 5, y_under - 8, y_under + 30, H.az - 10, z1 + 5))
+    g0 = gap(fill, top)[0]
+    g, at = min((gap(rot(fill, a), top)[0], a) for a in range(2, MAX_OPEN + 1, 2))
+    check(g >= g0 - 1e-3, f"pocket fill clears the tray through 2-{MAX_OPEN}° (min gap {g:.3f} mm at {at}°, "
+                          f"closed {g0:.3f} mm); pocket left open {z0 - pb.zmin:.2f} mm from the hinge edge")
+    return lid
 
 
 # ---- pins and sockets (built for +X, mirrored) --------------------------------------
@@ -1451,6 +1486,7 @@ def main(argv):
     H = Hinge(tray, lid)
     print(H)
     tray, lid = fill_old_bores(tray, lid)
+    lid = shrink_pocket(tray, lid)
     for n in names:
         t, l, pose = BUILDERS[n](tray, lid)
         export(n, t, l, pose)

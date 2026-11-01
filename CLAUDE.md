@@ -17,6 +17,8 @@ The original hinge needs two Ø2.41 mm metal rods. `make_rodless_hinge.py` (CadQ
 - **snap:** round pins in C-sockets.
 - **print_in_place:** cone pins, printed assembled with the lid open 90°.
 
+All variants also get the lid's underside pocket (67 × 39 × 3.7 mm) filled in, which the script calls `shrink_pocket`. Only a strip at the hinge edge stays open, because the tray's back wall swings through it. The fill has a 45° rear face so it prints without support. `POCKET_FILL_Z` sets where the fill starts.
+
 The lid's flat top (plane at Y 29.85) gets a debossed leather texture in two styles: **grain** (Voronoi pebbles) and **stitched** (grain + a dashed stitch line 3 mm inside the edge). The texture is applied to the mesh only, so the STLs and GLBs carry it and the STEP stays smooth. It is cut in only, never raised, so hinge clearances are unaffected; a 2 mm border stays flat because the lid is only 1.07 mm thick at its front edge. The texture parameters are the `TEX_*` / `STITCH_*` constants.
 
 Every geometric check the script makes prints PASS/FAIL. All fit dimensions are constants at the top of the script.
@@ -27,9 +29,9 @@ Every geometric check the script makes prints PASS/FAIL. All fit dimensions are 
 
 ## Layout
 
-- `coin.STEP` — original model; never modified.
+- `Original/coin.STEP` — original model; never modified.
 - `make_rodless_hinge.py` — generator + checks. `python make_rodless_hinge.py [keyed|snap|print_in_place ...]`.
-- `rodless/<variant>/` — generated output (`<style>` is `grain` or `stitched`):
+- `CoinBox/<variant>/` — generated output (`<style>` is `grain` or `stitched`):
   - `coin_<variant>.step` — both bodies, smooth.
   - STLs — keyed/snap: `coin_<variant>_tray.stl` + `coin_<variant>_lid_<style>.stl`; print_in_place: one assembled `coin_print_in_place_<style>.stl` (lid at 90°).
   - `coin_<variant>_<style>.glb` — animated assembly with the textured lid.
@@ -41,4 +43,4 @@ Every geometric check the script makes prints PASS/FAIL. All fit dimensions are 
 
 Remote: `github.com/shivamchudasama/KiaSorentoCoinBox_3DPrinting`, branch `main`.
 
-All generated output in `rodless/` is committed, about 310 MB. The STL, STEP (`*.step` and `*.STEP`), GLB, 3MF and PDF files go to Git LFS through `.gitattributes`. PNGs are ordinary blobs. LFS free tier is 1 GB storage / 1 GB/month bandwidth, so every regeneration that changes the STLs/GLBs costs about 300 MB of storage. Regenerate and commit outputs deliberately, not on every tweak.
+All generated output in `CoinBox/` is committed, about 310 MB. The STL, STEP (`*.step` and `*.STEP`), GLB, 3MF and PDF files go to Git LFS through `.gitattributes`. PNGs are ordinary blobs. LFS free tier is 1 GB storage / 1 GB/month bandwidth, so every regeneration that changes the STLs/GLBs costs about 300 MB of storage. Regenerate and commit outputs deliberately, not on every tweak.

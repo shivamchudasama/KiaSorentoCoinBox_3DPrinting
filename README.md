@@ -2,7 +2,7 @@
 
 A 3D-printable coin and mechanical-key holder for the Kia Sorento. It is a tray with a hinged lid, about 175 × 48 mm. The original model needs two Ø2.41 mm metal rods for its hinge. This repo replaces them with printed hinges, offered in three variants, and adds an optional leather texture to the lid.
 
-![Keyed hinge close-up](rodless/keyed/coin_keyed_hinge.png)
+![Keyed hinge close-up](CoinBox/keyed/coin_keyed_hinge.png)
 
 ## Hinge variants
 
@@ -21,16 +21,16 @@ The lid's flat top is debossed with a leather texture in one of two styles:
 - **grain** — Voronoi pebbles, about 1.5 mm across and 0.35 mm deep.
 - **stitched** — the same grain plus a dashed stitch line 3 mm inside the edge.
 
-![Leather texture](rodless/keyed/coin_keyed_leather.png)
+![Leather texture](CoinBox/keyed/coin_keyed_leather.png)
 
 The texture is cut into the surface and never raised, so it doesn't affect hinge clearances. A 2 mm border is left smooth. To get crisp grain, print the lid with fine layers, around 0.12 mm.
 
 ## Files
 
 ```
-coin.STEP                    original model (SolidWorks 2024 export, inches) — never modified
+Original/coin.STEP           original model (SolidWorks 2024 export, inches) — never modified
 make_rodless_hinge.py        generator + geometric checks (CadQuery)
-rodless/<variant>/
+CoinBox/<variant>/
   coin_<variant>.step                 both bodies, smooth (no texture)
   coin_<variant>_tray.stl             keyed / snap
   coin_<variant>_lid_<style>.stl      keyed / snap — style = grain | stitched
